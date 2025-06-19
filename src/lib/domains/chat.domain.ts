@@ -1,0 +1,12 @@
+import { FirestoreTimestamp } from "./base.domain";
+
+export interface Chat {
+  id?: string;
+  file_ids: string[];
+  message_ids: string[];
+}
+
+export interface FirebaseChat extends Omit<Chat, "created_at" | "updated_at"> {
+  created_at?: FirestoreTimestamp;
+  updated_at?: FirestoreTimestamp;
+}
