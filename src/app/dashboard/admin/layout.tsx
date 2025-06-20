@@ -13,6 +13,7 @@ import {
   ChevronLeft,
   LogOut,
   FileText,
+  UserCheck,
 } from "lucide-react";
 import { logoutUser } from "@/lib/firebase/client";
 
@@ -29,6 +30,12 @@ const adminNavItems: AdminNavItem[] = [
     label: "User Management",
     icon: Users,
     description: "Manage user accounts and permissions",
+  },
+  {
+    href: "/dashboard/admin/roles",
+    label: "Role Management",
+    icon: UserCheck,
+    description: "Manage roles and permissions",
   },
   {
     href: "/dashboard/admin/files",

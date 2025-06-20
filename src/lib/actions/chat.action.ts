@@ -3,7 +3,9 @@
 
 import admin from "@/lib/firebase/server";
 import { Chat, FirebaseChat } from "@/lib/domains/chat.domain";
-import { Message } from "@/lib/domains/message.domain";
+import { Message, MessageType } from "@/lib/domains/message.domain";
+import { chatFlow } from "./ai-chat.action";
+import { generateChatName } from "./ai-chat.action";
 
 const db = admin.firestore();
 const collection = db.collection("Chat");
@@ -16,6 +18,7 @@ export async function createChat(
     const timestamp = admin.firestore.FieldValue.serverTimestamp();
     const docRef = await collection.add({
       ...data,
+      name: data.name || "New Chat", // Default name for new chats
       created_at: timestamp,
       updated_at: timestamp,
     });
@@ -41,6 +44,7 @@ export async function getChat(
     const data = doc.data() as FirebaseChat;
     const result: Chat = {
       id: doc.id,
+      name: data.name || `Chat ${doc.id}`,
       file_ids: data.file_ids,
       message_ids: data.message_ids,
     };
@@ -66,6 +70,7 @@ export async function getAllChats(): Promise<{
       const docData = doc.data() as FirebaseChat;
       data.push({
         id: doc.id,
+        name: docData.name || `Chat ${doc.id}`,
         file_ids: docData.file_ids,
         message_ids: docData.message_ids,
       });
@@ -241,5 +246,176 @@ export async function getMessagesByIds(
   } catch (error) {
     console.error("Error getting messages by IDs:", error);
     return { success: false, error: "Failed to get messages" };
+  }
+}
+
+// Add message to chat with AI response (including file context)
+export async function addMessageToChatWithAI(
+  chatId: string,
+  userMessage: Omit<Message, "id">
+): Promise<{
+  success: boolean;
+  userMessageId?: string;
+  aiMessageId?: string;
+  error?: string;
+}> {
+  try {
+    const messageCollection = db.collection("Message");
+    const fileCollection = db.collection("File");
+    const timestamp = admin.firestore.FieldValue.serverTimestamp();
+
+    // Get existing messages for context
+    const chat = await getChat(chatId);
+    if (!chat.success || !chat.data) {
+      return { success: false, error: "Chat not found" };
+    }
+
+    const existingMessages = await getMessagesByIds(chat.data.message_ids);
+    if (!existingMessages.success) {
+      return { success: false, error: "Failed to get existing messages" };
+    }
+
+    // Check if this is the first message and auto-name the chat
+    const isFirstMessage = chat.data.message_ids.length === 0;
+    let shouldAutoName =
+      isFirstMessage && (chat.data.name === "New Chat" || !chat.data.name);
+
+    // Get attached files information for analysis
+    let attachedFilesInfo = [];
+    if (chat.data.file_ids.length > 0) {
+      for (const fileId of chat.data.file_ids) {
+        try {
+          const fileDoc = await fileCollection.doc(fileId).get();
+          if (fileDoc.exists) {
+            const fileData = fileDoc.data();
+            const fileName = fileData?.path
+              ? getFilenameFromPath(fileData.path)
+              : `file-${fileId}`;
+            attachedFilesInfo.push({
+              id: fileId,
+              name: fileName,
+              url: fileData?.path || "",
+              type: getFileExtension(fileName),
+            });
+          }
+        } catch (error) {
+          console.error(`Error fetching file ${fileId}:`, error);
+        }
+      }
+    }
+
+    // Create user message
+    const userMessageDocRef = await messageCollection.add({
+      ...userMessage,
+      created_at: timestamp,
+      updated_at: timestamp,
+    });
+
+    // Prepare data for AI with file information
+    const aiInput = {
+      existingMessages: (existingMessages.data || []).map((msg, index) => ({
+        id: index,
+        text: msg.message,
+        sender:
+          msg.type === MessageType.USER
+            ? ("user" as const)
+            : ("system" as const),
+        timestamp: new Date().toISOString(),
+      })),
+      newMessage: {
+        id: existingMessages.data?.length || 0,
+        text: userMessage.message,
+        sender: "user" as const,
+        timestamp: new Date().toISOString(),
+      },
+      attachedFiles: attachedFilesInfo,
+    };
+
+    // Get AI response with immediate file analysis
+    const aiResponse = await chatFlow(aiInput);
+
+    // Create AI message
+    const aiMessage: Omit<Message, "id"> = {
+      message: aiResponse,
+      type: MessageType.BOT,
+    };
+
+    const aiMessageDocRef = await messageCollection.add({
+      ...aiMessage,
+      created_at: timestamp,
+      updated_at: timestamp,
+    });
+
+    // Generate chat name if this is the first message
+    let chatName = null;
+    if (shouldAutoName) {
+      try {
+        chatName = await generateChatName(
+          userMessage.message,
+          attachedFilesInfo
+        );
+      } catch (error) {
+        console.error("Error generating chat name:", error);
+        chatName =
+          userMessage.message.substring(0, 50) +
+          (userMessage.message.length > 50 ? "..." : "");
+      }
+    }
+
+    // Update chat with messages and potentially new name
+    const updateData: any = {
+      message_ids: admin.firestore.FieldValue.arrayUnion(
+        userMessageDocRef.id,
+        aiMessageDocRef.id
+      ),
+      updated_at: timestamp,
+    };
+
+    if (chatName) {
+      updateData.name = chatName;
+    }
+
+    await collection.doc(chatId).update(updateData);
+
+    return {
+      success: true,
+      userMessageId: userMessageDocRef.id,
+      aiMessageId: aiMessageDocRef.id,
+    };
+  } catch (error) {
+    console.error("Error adding message to chat with AI:", error);
+    return { success: false, error: "Failed to add message to chat with AI" };
+  }
+}
+
+// Helper function to extract filename from path
+function getFilenameFromPath(path: string): string {
+  if (!path) return "Unknown file";
+  const urlParts = path.split("/");
+  const filename = urlParts[urlParts.length - 1];
+  return filename.replace(/^\d+-/, "") || "Unknown file";
+}
+
+// Helper function to get file extension
+function getFileExtension(filename: string): string {
+  return filename.split(".").pop()?.toLowerCase() || "";
+}
+
+// Add new function for renaming chat
+export async function renameChatById(
+  chatId: string,
+  newName: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const timestamp = admin.firestore.FieldValue.serverTimestamp();
+    await collection.doc(chatId).update({
+      name: newName.trim() || "Untitled Chat",
+      updated_at: timestamp,
+    });
+
+    return { success: true };
+  } catch (error) {
+    console.error("Error renaming chat:", error);
+    return { success: false, error: "Failed to rename chat" };
   }
 }

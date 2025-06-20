@@ -2,6 +2,7 @@ import { FirestoreTimestamp } from "./base.domain";
 
 export interface Chat {
   id?: string;
+  name?: string;
   file_ids: string[];
   message_ids: string[];
 }
