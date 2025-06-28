@@ -6,18 +6,44 @@ import { Chat, FirebaseChat } from "@/lib/domains/chat.domain";
 import { Message, MessageType } from "@/lib/domains/message.domain";
 import { chatFlow } from "./ai-chat.action";
 import { generateChatName } from "./ai-chat.action";
+import { cookies } from "next/headers";
 
 const db = admin.firestore();
 const collection = db.collection("Chat");
 
+// Helper function to get current user ID from session
+async function getCurrentUserId(): Promise<string | null> {
+  try {
+    const cookieStore = await cookies();
+    const sessionCookie = cookieStore.get("userId");
+
+    if (!sessionCookie?.value) {
+      return null;
+    }
+
+    return sessionCookie.value;
+  } catch (error) {
+    console.error("Error getting current user ID:", error);
+    return null;
+  }
+}
+
 // Create
 export async function createChat(
-  data: Omit<Chat, "id">
+  data: Omit<Chat, "id" | "user_id">
 ): Promise<{ success: boolean; id?: string; error?: string }> {
   try {
+    console.log("Creating chat with data:");
+    const userId = await getCurrentUserId();
+    console.log("Creating chat for user ID:", userId);
+    if (!userId) {
+      return { success: false, error: "User not authenticated" };
+    }
+
     const timestamp = admin.firestore.FieldValue.serverTimestamp();
     const docRef = await collection.add({
       ...data,
+      user_id: userId,
       name: data.name || "New Chat", // Default name for new chats
       created_at: timestamp,
       updated_at: timestamp,
@@ -30,11 +56,16 @@ export async function createChat(
   }
 }
 
-// Read - Get by ID
+// Read - Get by ID (only if user owns it)
 export async function getChat(
   id: string
 ): Promise<{ success: boolean; data?: Chat; error?: string }> {
   try {
+    const userId = await getCurrentUserId();
+    if (!userId) {
+      return { success: false, error: "User not authenticated" };
+    }
+
     const doc = await collection.doc(id).get();
 
     if (!doc.exists) {
@@ -42,11 +73,18 @@ export async function getChat(
     }
 
     const data = doc.data() as FirebaseChat;
+
+    // Check if user owns this chat
+    if (data.user_id !== userId) {
+      return { success: false, error: "Access denied" };
+    }
+
     const result: Chat = {
       id: doc.id,
       name: data.name || `Chat ${doc.id}`,
       file_ids: data.file_ids,
       message_ids: data.message_ids,
+      user_id: data.user_id,
     };
 
     return { success: true, data: result };
@@ -56,14 +94,19 @@ export async function getChat(
   }
 }
 
-// Read - Get all
+// Read - Get all (only user's chats)
 export async function getAllChats(): Promise<{
   success: boolean;
   data?: Chat[];
   error?: string;
 }> {
   try {
-    const snapshot = await collection.get();
+    const userId = await getCurrentUserId();
+    if (!userId) {
+      return { success: false, error: "User not authenticated" };
+    }
+
+    const snapshot = await collection.where("user_id", "==", userId).get();
     const data: Chat[] = [];
 
     snapshot.forEach((doc) => {
@@ -73,6 +116,7 @@ export async function getAllChats(): Promise<{
         name: docData.name || `Chat ${doc.id}`,
         file_ids: docData.file_ids,
         message_ids: docData.message_ids,
+        user_id: docData.user_id,
       });
     });
 
@@ -83,12 +127,28 @@ export async function getAllChats(): Promise<{
   }
 }
 
-// Update
+// Update (only if user owns it)
 export async function updateChat(
   id: string,
-  data: Partial<Omit<Chat, "id">>
+  data: Partial<Omit<Chat, "id" | "user_id">>
 ): Promise<{ success: boolean; error?: string }> {
   try {
+    const userId = await getCurrentUserId();
+    if (!userId) {
+      return { success: false, error: "User not authenticated" };
+    }
+
+    // Check if user owns this chat
+    const chatDoc = await collection.doc(id).get();
+    if (!chatDoc.exists) {
+      return { success: false, error: "Chat not found" };
+    }
+
+    const chatData = chatDoc.data() as FirebaseChat;
+    if (chatData.user_id !== userId) {
+      return { success: false, error: "Access denied" };
+    }
+
     const timestamp = admin.firestore.FieldValue.serverTimestamp();
     await collection.doc(id).update({
       ...data,
@@ -102,11 +162,27 @@ export async function updateChat(
   }
 }
 
-// Delete
+// Delete (only if user owns it)
 export async function deleteChat(
   id: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
+    const userId = await getCurrentUserId();
+    if (!userId) {
+      return { success: false, error: "User not authenticated" };
+    }
+
+    // Check if user owns this chat
+    const chatDoc = await collection.doc(id).get();
+    if (!chatDoc.exists) {
+      return { success: false, error: "Chat not found" };
+    }
+
+    const chatData = chatDoc.data() as FirebaseChat;
+    if (chatData.user_id !== userId) {
+      return { success: false, error: "Access denied" };
+    }
+
     await collection.doc(id).delete();
     return { success: true };
   } catch (error) {
@@ -115,12 +191,28 @@ export async function deleteChat(
   }
 }
 
-// Add message to chat
+// Add message to chat (only if user owns it)
 export async function addMessageToChat(
   chatId: string,
   message: Omit<Message, "id">
 ): Promise<{ success: boolean; messageId?: string; error?: string }> {
   try {
+    const userId = await getCurrentUserId();
+    if (!userId) {
+      return { success: false, error: "User not authenticated" };
+    }
+
+    // Check if user owns this chat
+    const chatDoc = await collection.doc(chatId).get();
+    if (!chatDoc.exists) {
+      return { success: false, error: "Chat not found" };
+    }
+
+    const chatData = chatDoc.data() as FirebaseChat;
+    if (chatData.user_id !== userId) {
+      return { success: false, error: "Access denied" };
+    }
+
     const messageCollection = db.collection("Message");
     const timestamp = admin.firestore.FieldValue.serverTimestamp();
 
@@ -169,12 +261,28 @@ export async function removeMessageFromChat(
   }
 }
 
-// Add file to chat
+// Add file to chat (only if user owns it)
 export async function addFileToChat(
   chatId: string,
   fileId: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
+    const userId = await getCurrentUserId();
+    if (!userId) {
+      return { success: false, error: "User not authenticated" };
+    }
+
+    // Check if user owns this chat
+    const chatDoc = await collection.doc(chatId).get();
+    if (!chatDoc.exists) {
+      return { success: false, error: "Chat not found" };
+    }
+
+    const chatData = chatDoc.data() as FirebaseChat;
+    if (chatData.user_id !== userId) {
+      return { success: false, error: "Access denied" };
+    }
+
     const timestamp = admin.firestore.FieldValue.serverTimestamp();
     await collection.doc(chatId).update({
       file_ids: admin.firestore.FieldValue.arrayUnion(fileId),
@@ -188,12 +296,28 @@ export async function addFileToChat(
   }
 }
 
-// Remove file from chat
+// Remove file from chat (only if user owns it)
 export async function removeFileFromChat(
   chatId: string,
   fileId: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
+    const userId = await getCurrentUserId();
+    if (!userId) {
+      return { success: false, error: "User not authenticated" };
+    }
+
+    // Check if user owns this chat
+    const chatDoc = await collection.doc(chatId).get();
+    if (!chatDoc.exists) {
+      return { success: false, error: "Chat not found" };
+    }
+
+    const chatData = chatDoc.data() as FirebaseChat;
+    if (chatData.user_id !== userId) {
+      return { success: false, error: "Access denied" };
+    }
+
     const timestamp = admin.firestore.FieldValue.serverTimestamp();
     await collection.doc(chatId).update({
       file_ids: admin.firestore.FieldValue.arrayRemove(fileId),
@@ -260,14 +384,19 @@ export async function addMessageToChatWithAI(
   error?: string;
 }> {
   try {
+    const userId = await getCurrentUserId();
+    if (!userId) {
+      return { success: false, error: "User not authenticated" };
+    }
+
     const messageCollection = db.collection("Message");
     const fileCollection = db.collection("File");
     const timestamp = admin.firestore.FieldValue.serverTimestamp();
 
-    // Get existing messages for context
+    // Get existing chat and verify ownership
     const chat = await getChat(chatId);
     if (!chat.success || !chat.data) {
-      return { success: false, error: "Chat not found" };
+      return { success: false, error: "Chat not found or access denied" };
     }
 
     const existingMessages = await getMessagesByIds(chat.data.message_ids);
@@ -401,12 +530,28 @@ function getFileExtension(filename: string): string {
   return filename.split(".").pop()?.toLowerCase() || "";
 }
 
-// Add new function for renaming chat
+// Add new function for renaming chat (only if user owns it)
 export async function renameChatById(
   chatId: string,
   newName: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
+    const userId = await getCurrentUserId();
+    if (!userId) {
+      return { success: false, error: "User not authenticated" };
+    }
+
+    // Check if user owns this chat
+    const chatDoc = await collection.doc(chatId).get();
+    if (!chatDoc.exists) {
+      return { success: false, error: "Chat not found" };
+    }
+
+    const chatData = chatDoc.data() as FirebaseChat;
+    if (chatData.user_id !== userId) {
+      return { success: false, error: "Access denied" };
+    }
+
     const timestamp = admin.firestore.FieldValue.serverTimestamp();
     await collection.doc(chatId).update({
       name: newName.trim() || "Untitled Chat",

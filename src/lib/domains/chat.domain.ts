@@ -5,6 +5,7 @@ export interface Chat {
   name?: string;
   file_ids: string[];
   message_ids: string[];
+  user_id: string; // Required field
 }
 
 export interface FirebaseChat extends Omit<Chat, "created_at" | "updated_at"> {

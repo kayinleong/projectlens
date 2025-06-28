@@ -160,6 +160,9 @@ export default function DashboardPage() {
 
       if (chatsResult.success && chatsResult.data) {
         setChats(chatsResult.data);
+      } else if (chatsResult.error === "User not authenticated") {
+        router.push("/auth/login");
+        return;
       }
 
       if (filesResult.success && filesResult.data) {
@@ -252,14 +255,26 @@ export default function DashboardPage() {
       });
 
       if (result.success && result.id) {
+        const currentUser = await getCurrentUser();
+        if (!currentUser) {
+          router.push("/auth/login");
+          return;
+        }
+
         const newChat: Chat = {
           id: result.id,
           name: "New Chat",
           file_ids: [],
           message_ids: [],
+          user_id: currentUser.uid,
         };
         setChats((prev) => [newChat, ...prev]);
         setSelectedChatId(result.id);
+      } else {
+        console.error("Error creating chat:", result.error);
+        if (result.error === "User not authenticated") {
+          router.push("/auth/login");
+        }
       }
     } catch (error) {
       console.error("Error creating chat:", error);
