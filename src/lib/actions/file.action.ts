@@ -1,8 +1,10 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use server";
 
 import admin from "@/lib/firebase/server";
 import { FileDomain, FirebaseFile } from "@/lib/domains/file.domain";
 import { getStorage } from "firebase-admin/storage";
+import { PDFLoader } from "@langchain/community/document_loaders/fs/pdf";
 import { Buffer } from "buffer";
 
 const db = admin.firestore();
@@ -66,6 +68,20 @@ async function uploadFileToStorage(
   }
 }
 
+// Helper function to extract text from PDF
+async function extractTextFromPDF(fileBuffer: Buffer): Promise<string> {
+  try {
+    const loader = new PDFLoader(new Blob([new Uint8Array(fileBuffer)]));
+    const docs = await loader.load();
+    const extractedText = docs.map((doc: any) => doc.pageContent).join("\n");
+
+    return extractedText || "";
+  } catch (error) {
+    console.error("Error extracting PDF text:", error);
+    return "";
+  }
+}
+
 // Create - Upload file and store metadata
 export async function createFile(
   formData: FormData
@@ -89,9 +105,16 @@ export async function createFile(
       return { success: false, error: error || "Failed to upload file" };
     }
 
+    // Extract text if it's a PDF file
+    let extractedText = "";
+    if (file.type === "application/pdf") {
+      extractedText = await extractTextFromPDF(buffer);
+    }
+
     const timestamp = admin.firestore.FieldValue.serverTimestamp();
     const docRef = await collection.add({
       path: url,
+      extracted_text: extractedText,
       created_at: timestamp,
       updated_at: timestamp,
     });
@@ -118,6 +141,7 @@ export async function getFile(
     const result: FileDomain = {
       id: doc.id,
       path: data.path,
+      extracted_text: data.extracted_text || "",
     };
 
     return { success: true, data: result };
@@ -142,6 +166,7 @@ export async function getAllFiles(): Promise<{
       data.push({
         id: doc.id,
         path: docData.path,
+        extracted_text: docData.extracted_text || "",
       });
     });
 
@@ -168,6 +193,7 @@ export async function getFileByPath(
     const result: FileDomain = {
       id: doc.id,
       path: docData.path,
+      extracted_text: docData.extracted_text || "",
     };
 
     return { success: true, data: result };

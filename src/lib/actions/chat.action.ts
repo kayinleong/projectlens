@@ -406,11 +406,11 @@ export async function addMessageToChatWithAI(
 
     // Check if this is the first message and auto-name the chat
     const isFirstMessage = chat.data.message_ids.length === 0;
-    let shouldAutoName =
+    const shouldAutoName =
       isFirstMessage && (chat.data.name === "New Chat" || !chat.data.name);
 
-    // Get attached files information for analysis
-    let attachedFilesInfo = [];
+    // Get attached files information with extracted text for analysis
+    const attachedFilesInfo = [];
     if (chat.data.file_ids.length > 0) {
       for (const fileId of chat.data.file_ids) {
         try {
@@ -425,6 +425,7 @@ export async function addMessageToChatWithAI(
               name: fileName,
               url: fileData?.path || "",
               type: getFileExtension(fileName),
+              extracted_text: fileData?.extracted_text || "", // Add extracted text
             });
           }
         } catch (error) {
@@ -440,7 +441,7 @@ export async function addMessageToChatWithAI(
       updated_at: timestamp,
     });
 
-    // Prepare data for AI with file information
+    // Prepare data for AI with file information including extracted text
     const aiInput = {
       existingMessages: (existingMessages.data || []).map((msg, index) => ({
         id: index,

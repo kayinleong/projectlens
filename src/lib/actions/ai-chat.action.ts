@@ -25,6 +25,7 @@ const ChatSchema = z.object({
         name: z.string(),
         url: z.string(),
         type: z.string().optional(),
+        extracted_text: z.string().optional(), // Add extracted_text field
       })
     )
     .optional(),
@@ -72,16 +73,22 @@ When responding:
         .join("\n")}\n\n`;
     }
 
-    // Prepare file analysis context
+    // Prepare file analysis context with extracted text
     let fileAnalysisContext = "";
     if (chats.attachedFiles && chats.attachedFiles.length > 0) {
       fileAnalysisContext = `\n\nATTACHED FILES FOR IMMEDIATE ANALYSIS:\n`;
       chats.attachedFiles.forEach((file) => {
-        fileAnalysisContext += `- ${file.name} (${
+        fileAnalysisContext += `\nFile: ${file.name} (${
           file.type || "unknown type"
-        }): ${file.url}\n`;
+        })\n`;
+        if (file.extracted_text && file.extracted_text.trim()) {
+          fileAnalysisContext += `Content:\n${file.extracted_text}\n`;
+          fileAnalysisContext += `--- End of ${file.name} ---\n`;
+        } else {
+          fileAnalysisContext += `Note: No text content could be extracted from this file.\n`;
+        }
       });
-      fileAnalysisContext += `\nPlease analyze these files immediately and incorporate the findings into your response. Do not ask the user to wait for analysis.`;
+      fileAnalysisContext += `\nPlease analyze the above file content(s) immediately and incorporate the findings into your response. Provide specific insights based on the actual content shown above.`;
     }
 
     const fullPrompt = `${conversationContext}Current user message: ${chats.newMessage.text}${fileAnalysisContext}`;
@@ -120,14 +127,15 @@ Examples:
 Return only the title, nothing else.`;
 
     const chat = ai.chat({
-      system: "You are a helpful assistant that generates concise, descriptive titles for chat conversations. Return only the title without any additional text or formatting.",
+      system:
+        "You are a helpful assistant that generates concise, descriptive titles for chat conversations. Return only the title without any additional text or formatting.",
     });
 
     const { text } = await chat.send(prompt);
 
     // Clean up the response and ensure it's not too long
     const generatedName = text.trim().replace(/['"]/g, "").substring(0, 50);
-    
+
     if (!generatedName) {
       throw new Error("No name generated");
     }

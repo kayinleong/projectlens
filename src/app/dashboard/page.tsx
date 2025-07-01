@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useState, useEffect, useRef } from "react";
@@ -248,9 +249,14 @@ export default function DashboardPage() {
 
   const handleNewChat = async () => {
     try {
+      // Get all available file IDs to attach by default
+      const allFileIds = files
+        .map((file) => file.id)
+        .filter(Boolean) as string[];
+
       const result = await createChat({
         name: "New Chat",
-        file_ids: [],
+        file_ids: allFileIds, // Attach all available files by default
         message_ids: [],
       });
 
@@ -264,7 +270,7 @@ export default function DashboardPage() {
         const newChat: Chat = {
           id: result.id,
           name: "New Chat",
-          file_ids: [],
+          file_ids: allFileIds, // Include all file IDs in the local state
           message_ids: [],
           user_id: currentUser.uid,
         };
@@ -312,7 +318,8 @@ export default function DashboardPage() {
       if (result.success && result.id) {
         const newFile: FileDomain = {
           id: result.id,
-          path: "", // Will be populated from server
+          path: "",
+          extracted_text: "",
         };
         setFiles((prev) => [...prev, newFile]);
         await loadData(); // Reload to get updated file data
@@ -758,7 +765,7 @@ export default function DashboardPage() {
               <div className="space-y-2">
                 <Upload className="w-6 h-6 sm:w-8 sm:h-8 mx-auto text-gray-300" />
                 <p className="text-xs sm:text-sm text-gray-500">
-                  You don't have permission to upload files
+                  You don&apos;t have permission to upload files
                 </p>
                 <p className="text-xs text-gray-400">
                   Contact your administrator for write access
@@ -1281,7 +1288,6 @@ export default function DashboardPage() {
                                     components={{
                                       code: ({
                                         inline,
-                                        className,
                                         children,
                                         ...props
                                       }: any) => {
