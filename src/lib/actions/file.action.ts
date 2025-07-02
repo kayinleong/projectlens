@@ -5,6 +5,8 @@ import admin from "@/lib/firebase/server";
 import { FileDomain, FirebaseFile } from "@/lib/domains/file.domain";
 import { getStorage } from "firebase-admin/storage";
 import { PDFLoader } from "@langchain/community/document_loaders/fs/pdf";
+import { PPTXLoader } from "@langchain/community/document_loaders/fs/pptx";
+import * as XLSX from "xlsx";
 import { Buffer } from "buffer";
 
 const db = admin.firestore();
@@ -82,6 +84,77 @@ async function extractTextFromPDF(fileBuffer: Buffer): Promise<string> {
   }
 }
 
+// Helper function to extract text from Excel files
+async function extractTextFromExcel(fileBuffer: Buffer): Promise<string> {
+  try {
+    const workbook = XLSX.read(fileBuffer, { type: "buffer" });
+    let extractedText = "";
+
+    workbook.SheetNames.forEach((sheetName) => {
+      const sheet = workbook.Sheets[sheetName];
+      const sheetData = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+
+      // Add sheet name as header
+      extractedText += `Sheet: ${sheetName}\n`;
+
+      // Convert sheet data to text
+      sheetData.forEach((row: any[]) => {
+        if (row.length > 0) {
+          extractedText += row.join("\t") + "\n";
+        }
+      });
+
+      extractedText += "\n";
+    });
+
+    return extractedText;
+  } catch (error) {
+    console.error("Error extracting Excel text:", error);
+    return "";
+  }
+}
+
+// Helper function to extract text from PowerPoint files
+async function extractTextFromPPTX(fileBuffer: Buffer): Promise<string> {
+  try {
+    const loader = new PPTXLoader(new Blob([new Uint8Array(fileBuffer)]));
+    const docs = await loader.load();
+    const extractedText = docs.map((doc: any) => doc.pageContent).join("\n");
+
+    return extractedText || "";
+  } catch (error) {
+    console.error("Error extracting PPTX text:", error);
+    return "";
+  }
+}
+
+// Helper function to extract filename from path - enhanced version
+function getFilenameFromPath(path: string): string {
+  if (!path) return "Unknown file";
+
+  try {
+    // Handle URLs - extract the last segment after the last slash
+    const urlParts = path.split("/");
+    let filename = urlParts[urlParts.length - 1];
+
+    // Remove URL parameters if present (e.g., ?token=abc)
+    if (filename.includes("?")) {
+      filename = filename.split("?")[0];
+    }
+
+    // Remove timestamp prefix if present (e.g., "1234567890-filename.txt" -> "filename.txt")
+    filename = filename.replace(/^\d+-/, "");
+
+    // Decode URL encoding (e.g., %20 -> space)
+    filename = decodeURIComponent(filename);
+
+    return filename || "Unknown file";
+  } catch (error) {
+    console.error("Error extracting filename from path:", error);
+    return "Unknown file";
+  }
+}
+
 // Create - Upload file and store metadata
 export async function createFile(
   formData: FormData
@@ -105,10 +178,27 @@ export async function createFile(
       return { success: false, error: error || "Failed to upload file" };
     }
 
-    // Extract text if it's a PDF file
+    // Extract text based on file type
     let extractedText = "";
+
     if (file.type === "application/pdf") {
       extractedText = await extractTextFromPDF(buffer);
+    } else if (
+      file.type ===
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
+      file.type === "application/vnd.ms-excel" ||
+      file.name.endsWith(".xlsx") ||
+      file.name.endsWith(".xls")
+    ) {
+      extractedText = await extractTextFromExcel(buffer);
+    } else if (
+      file.type ===
+        "application/vnd.openxmlformats-officedocument.presentationml.presentation" ||
+      file.type === "application/vnd.ms-powerpoint" ||
+      file.name.endsWith(".pptx") ||
+      file.name.endsWith(".ppt")
+    ) {
+      extractedText = await extractTextFromPPTX(buffer);
     }
 
     const timestamp = admin.firestore.FieldValue.serverTimestamp();

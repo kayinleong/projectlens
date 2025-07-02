@@ -39,27 +39,28 @@ export const chatFlow = ai.defineFlow(
   },
   async (chats) => {
     const chat = ai.chat({
-      system: `You are ProjectLens AI, an intelligent assistant specializing in document analysis and career guidance. 
+      system: `You are ProjectLens AI, an intelligent assistant specializing in document analysis for project tracking and reporting.
 
 Key Instructions:
-- ALWAYS analyze attached files IMMEDIATELY and provide insights in your response
-- Do NOT ask users to wait for analysis - provide the analysis results directly
-- When files are attached, examine their content and incorporate findings into your answer
-- Provide specific, actionable recommendations based on file content
-- Reference specific details from uploaded documents when relevant
+- AUTOMATICALLY analyze ALL attached files and their extracted text content
+- Provide comprehensive insights based on ALL available document content
+- Cross-reference information across multiple documents when relevant
+- Identify patterns, trends, and correlations across all attached files
+- Do NOT ask users to specify which files to analyze - analyze ALL by default
+- Always process ALL available file content without requiring user selection
 
 Your capabilities include:
-1. **Immediate Document Analysis**: Analyze PDFs, documents, images, and other files instantly
-2. **Career Assistance**: Resume optimization, interview preparation, job search strategies
-3. **Content Insights**: Extract key information, summarize content, identify patterns
-4. **Professional Guidance**: Actionable advice for career development
+1. Comprehensive Document Analysis: Automatically process ALL PDFs, PPTs, spreadsheets, and Word files
+2. Cross-Document Insights: Compare and contrast information across multiple files
+3. Pattern Recognition: Identify trends and patterns across all available documents
+4. Contextual Understanding: Use all available document context to provide better responses
 
-When responding:
-- Start with immediate analysis results if files are present
-- Provide specific insights and recommendations
-- Reference file content directly in your analysis
-- Maintain a professional yet approachable tone
-- Give actionable next steps`,
+When files are attached, ALWAYS:
+- Analyze ALL files immediately without being asked
+- Provide insights that incorporate information from ALL available documents
+- Reference specific files when mentioning particular details
+- Highlight correlations or discrepancies across different documents
+- Process ALL extracted text content automatically`,
     });
 
     // Prepare the conversation context
@@ -73,22 +74,48 @@ When responding:
         .join("\n")}\n\n`;
     }
 
-    // Prepare file analysis context with extracted text
+    // Prepare comprehensive file analysis context with ALL extracted text
     let fileAnalysisContext = "";
     if (chats.attachedFiles && chats.attachedFiles.length > 0) {
-      fileAnalysisContext = `\n\nATTACHED FILES FOR IMMEDIATE ANALYSIS:\n`;
-      chats.attachedFiles.forEach((file) => {
-        fileAnalysisContext += `\nFile: ${file.name} (${
-          file.type || "unknown type"
-        })\n`;
-        if (file.extracted_text && file.extracted_text.trim()) {
+      fileAnalysisContext = `\n\nALL ATTACHED FILES - AUTOMATIC COMPREHENSIVE ANALYSIS:\n`;
+
+      const filesWithContent = chats.attachedFiles.filter(
+        (file) => file.extracted_text && file.extracted_text.trim()
+      );
+
+      const filesWithoutContent = chats.attachedFiles.filter(
+        (file) => !file.extracted_text || !file.extracted_text.trim()
+      );
+
+      if (filesWithContent.length > 0) {
+        fileAnalysisContext += `\nDOCUMENTS WITH EXTRACTED CONTENT (${filesWithContent.length} files):\n`;
+        filesWithContent.forEach((file, index) => {
+          fileAnalysisContext += `\n==== DOCUMENT ${index + 1}: ${
+            file.name
+          } ====\n`;
+          fileAnalysisContext += `File Type: ${file.type || "unknown"}\n`;
           fileAnalysisContext += `Content:\n${file.extracted_text}\n`;
-          fileAnalysisContext += `--- End of ${file.name} ---\n`;
-        } else {
-          fileAnalysisContext += `Note: No text content could be extracted from this file.\n`;
-        }
-      });
-      fileAnalysisContext += `\nPlease analyze the above file content(s) immediately and incorporate the findings into your response. Provide specific insights based on the actual content shown above.`;
+          fileAnalysisContext += `==== END OF DOCUMENT ${index + 1} ====\n\n`;
+        });
+      }
+
+      if (filesWithoutContent.length > 0) {
+        fileAnalysisContext += `\nFILES WITHOUT TEXT CONTENT (${filesWithoutContent.length} files):\n`;
+        filesWithoutContent.forEach((file, index) => {
+          fileAnalysisContext += `${index + 1}. ${file.name} (${
+            file.type || "unknown type"
+          }) - No extractable text\n`;
+        });
+        fileAnalysisContext += `\n`;
+      }
+
+      fileAnalysisContext += `ANALYSIS INSTRUCTIONS:
+- Automatically analyze ALL the document content above
+- Provide comprehensive insights based on ALL available documents
+- Cross-reference information across all documents
+- Identify patterns, trends, and correlations
+- Reference specific documents when citing information
+- Do NOT ask which files to analyze - analyze ALL automatically`;
     }
 
     const fullPrompt = `${conversationContext}Current user message: ${chats.newMessage.text}${fileAnalysisContext}`;
