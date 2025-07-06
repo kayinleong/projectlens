@@ -6,7 +6,9 @@ import { Chat, FirebaseChat } from "@/lib/domains/chat.domain";
 import { Message, MessageType } from "@/lib/domains/message.domain";
 import { chatFlow } from "./ai-chat.action";
 import { generateChatName } from "./ai-chat.action";
+import { addMemory } from "@/lib/mem0/server";
 import { cookies } from "next/headers";
+import { createMessageEmbedding } from "./embedding.action";
 
 const db = admin.firestore();
 const collection = db.collection("Chat");
@@ -373,7 +375,7 @@ export async function getMessagesByIds(
   }
 }
 
-// Add message to chat with AI response (including file context)
+// Add message to chat with AI response (including file context and memory)
 export async function addMessageToChatWithAI(
   chatId: string,
   userMessage: Omit<Message, "id">
@@ -441,7 +443,22 @@ export async function addMessageToChatWithAI(
       updated_at: timestamp,
     });
 
-    // Prepare data for AI with file information including extracted text
+    // Generate embedding for user message
+    try {
+      await createMessageEmbedding(
+        userMessageDocRef.id,
+        userMessage.message,
+        chatId
+      );
+    } catch (embeddingError) {
+      console.warn(
+        "Failed to create embedding for user message:",
+        embeddingError
+      );
+      // Don't fail the entire operation if embedding creation fails
+    }
+
+    // Prepare data for AI with file information including extracted text and userId
     const aiInput = {
       existingMessages: (existingMessages.data || []).map((msg, index) => ({
         id: index,
@@ -459,9 +476,10 @@ export async function addMessageToChatWithAI(
         timestamp: new Date().toISOString(),
       },
       attachedFiles: attachedFilesInfo,
+      userId: userId, // Add userId to AI input
     };
 
-    // Get AI response with immediate file analysis
+    // Get AI response with immediate file analysis and memory integration
     const aiResponse = await chatFlow(aiInput);
 
     // Create AI message
@@ -475,6 +493,34 @@ export async function addMessageToChatWithAI(
       created_at: timestamp,
       updated_at: timestamp,
     });
+
+    // Generate embedding for AI message
+    try {
+      await createMessageEmbedding(aiMessageDocRef.id, aiResponse, chatId);
+    } catch (embeddingError) {
+      console.warn(
+        "Failed to create embedding for AI message:",
+        embeddingError
+      );
+      // Don't fail the entire operation if embedding creation fails
+    }
+
+    // Save to Mem0 memory after successful message creation
+    try {
+      const memoryMessages = [
+        { role: "user" as const, content: userMessage.message },
+        { role: "assistant" as const, content: aiResponse },
+      ];
+
+      const memoryResult = await addMemory(memoryMessages, userId);
+      if (!memoryResult.success) {
+        console.warn("Failed to save to memory:", memoryResult.error);
+        // Don't fail the entire operation if memory save fails
+      }
+    } catch (memoryError) {
+      console.warn("Error saving to memory:", memoryError);
+      // Continue with the operation even if memory fails
+    }
 
     // Generate chat name if this is the first message
     let chatName = null;

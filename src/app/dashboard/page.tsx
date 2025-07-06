@@ -1106,31 +1106,18 @@ export default function DashboardPage() {
     ? chats.find((chat) => chat.id === selectedChatId)
     : null;
 
-  // Helper function to extract filename from path - enhanced version
+  // Helper function to extract filename from path
   const getFilenameFromPath = (path: string): string => {
     if (!path) return "Unknown file";
 
-    try {
-      // Handle URLs - extract the last segment after the last slash
-      const urlParts = path.split("/");
-      let filename = urlParts[urlParts.length - 1];
+    // Extract filename from URL path
+    const urlParts = path.split("/");
+    const filename = urlParts[urlParts.length - 1];
 
-      // Remove URL parameters if present (e.g., ?token=abc)
-      if (filename.includes("?")) {
-        filename = filename.split("?")[0];
-      }
+    // Remove timestamp prefix if present (e.g., "1234567890-filename.txt" -> "filename.txt")
+    const cleanFilename = filename.replace(/^\d+-/, "");
 
-      // Remove timestamp prefix if present (e.g., "1234567890-filename.txt" -> "filename.txt")
-      filename = filename.replace(/^\d+-/, "");
-
-      // Decode URL encoding (e.g., %20 -> space)
-      filename = decodeURIComponent(filename);
-
-      return filename || "Unknown file";
-    } catch (error) {
-      console.error("Error extracting filename from path:", error);
-      return "Unknown file";
-    }
+    return cleanFilename || "Unknown file";
   };
 
   // Helper function to get file extension
@@ -1420,7 +1407,7 @@ export default function DashboardPage() {
             {/* Message Input */}
             <div className="bg-white/80 backdrop-blur-sm border-t border-blue-200/50 p-4">
               <div className="max-w-4xl mx-auto">
-                {/* Attached Files Display - Show individual file chips */}
+                {/* Attached Files Display */}
                 {attachedFiles.length > 0 && (
                   <div className="mb-3 flex flex-wrap gap-2">
                     {attachedFiles.map((file) => {
