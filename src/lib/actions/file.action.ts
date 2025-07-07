@@ -242,42 +242,45 @@ export async function createFile(
     let extractedText = "";
 
     console.log("Attempting text extraction for file type:", file.type);
-    
+
     // PDF files
     if (file.type === "application/pdf") {
       console.log("Extracting text from PDF...");
       extractedText = await extractTextFromPDF(buffer);
-    } 
+    }
     // Excel files (.xlsx, .xls)
     else if (
-      file.type === "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
+      file.type ===
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
       file.type === "application/vnd.ms-excel" ||
       file.name.endsWith(".xlsx") ||
       file.name.endsWith(".xls")
     ) {
       console.log("Extracting text from Excel...");
       extractedText = await extractTextFromExcel(buffer);
-    } 
+    }
     // PowerPoint files (.pptx, .ppt)
     else if (
-      file.type === "application/vnd.openxmlformats-officedocument.presentationml.presentation" ||
+      file.type ===
+        "application/vnd.openxmlformats-officedocument.presentationml.presentation" ||
       file.type === "application/vnd.ms-powerpoint" ||
       file.name.endsWith(".pptx") ||
       file.name.endsWith(".ppt")
     ) {
       console.log("Extracting text from PowerPoint...");
       extractedText = await extractTextFromPPTX(buffer);
-    } 
+    }
     // Word documents (.docx, .doc)
     else if (
-      file.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
+      file.type ===
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
       file.type === "application/msword" ||
       file.name.endsWith(".docx") ||
       file.name.endsWith(".doc")
     ) {
       console.log("Extracting text from Word document...");
       extractedText = await extractTextFromDOCX(buffer);
-    } 
+    }
     // CSV files
     else if (
       file.type === "text/csv" ||
@@ -286,12 +289,12 @@ export async function createFile(
     ) {
       console.log("Extracting text from CSV...");
       extractedText = await extractTextFromCSV(buffer);
-    } 
+    }
     // Plain text files
     else if (file.type === "text/plain" || file.name.endsWith(".txt")) {
       console.log("Extracting text from plain text file...");
       extractedText = buffer.toString("utf-8");
-    } 
+    }
     // JSON files
     else if (file.type === "application/json" || file.name.endsWith(".json")) {
       console.log("Extracting text from JSON file...");
@@ -303,32 +306,43 @@ export async function createFile(
         console.error("Error parsing JSON:", jsonError);
         extractedText = buffer.toString("utf-8");
       }
-    } 
+    }
     // XML files
-    else if (file.type === "application/xml" || file.type === "text/xml" || file.name.endsWith(".xml")) {
+    else if (
+      file.type === "application/xml" ||
+      file.type === "text/xml" ||
+      file.name.endsWith(".xml")
+    ) {
       console.log("Extracting text from XML file...");
       extractedText = buffer.toString("utf-8");
-    } 
+    }
     // Markdown files
-    else if (file.type === "text/markdown" || file.name.endsWith(".md") || file.name.endsWith(".markdown")) {
+    else if (
+      file.type === "text/markdown" ||
+      file.name.endsWith(".md") ||
+      file.name.endsWith(".markdown")
+    ) {
       console.log("Extracting text from Markdown file...");
       extractedText = buffer.toString("utf-8");
-    } 
+    }
     // Other text-based files (try to extract as text)
     else if (file.type.startsWith("text/")) {
       console.log("Extracting text from generic text file...");
       extractedText = buffer.toString("utf-8");
-    } 
-    else {
+    } else {
       console.log("Unsupported file type for text extraction:", file.type);
       console.log("File name:", file.name);
-      
+
       // Last resort: try to extract as text if file is small enough
-      if (buffer.length < 1024 * 1024) { // Less than 1MB
+      if (buffer.length < 1024 * 1024) {
+        // Less than 1MB
         try {
           const textContent = buffer.toString("utf-8");
           // Check if it looks like readable text
-          if (textContent.length > 0 && !/[\x00-\x08\x0E-\x1F\x7F]/.test(textContent.substring(0, 100))) {
+          if (
+            textContent.length > 0 &&
+            !/[\x00-\x08\x0E-\x1F\x7F]/.test(textContent.substring(0, 100))
+          ) {
             console.log("Attempting to extract as plain text...");
             extractedText = textContent;
           }

@@ -916,187 +916,210 @@ export default function DashboardPage() {
 
   // Sidebar Component
   const SidebarContent = () => (
-    <div className="h-full bg-gradient-to-br from-blue-50 to-purple-50 border-r border-blue-200/50 flex flex-col">
+    <div className="h-full bg-white border-r border-gray-200 flex flex-col">
       {/* Header */}
-      <div className="p-4 border-b border-blue-200/50 bg-gradient-to-r from-blue-600 to-purple-600">
-        <div className="flex items-center justify-between mb-4">
-          <h1 className="text-xl font-bold text-white">ProjectLens</h1>
+      <div className="p-6 border-b border-gray-200 flex-shrink-0">
+        <div className="flex items-center mb-6">
+          <div className="w-8 h-8 bg-yellow-400 rounded-lg flex items-center justify-center mr-3">
+            <div className="w-4 h-4 bg-blue-600 rounded-sm"></div>
+          </div>
+          <div>
+            <h1 className="text-xl font-bold text-gray-900">ProjectLens</h1>
+            <p className="text-sm text-gray-500">CelcomDigi Enterprise</p>
+          </div>
         </div>
+
         <div className="space-y-2">
           <Button
             onClick={handleNewChat}
-            className="w-full bg-white text-blue-600 hover:bg-blue-50 font-medium"
+            className="w-full bg-blue-600 text-white hover:bg-blue-700 font-medium justify-start h-12 px-4"
             disabled={loading}
           >
-            <Plus className="w-4 h-4 mr-2" />
+            <Plus className="w-5 h-5 mr-3" />
             New Chat
           </Button>
-          <Button
-            variant="outline"
-            onClick={() => setFileExplorerOpen(true)}
-            className="w-full bg-white/90 text-purple-600 border-purple-300 hover:bg-purple-50 font-medium"
-          >
-            <FolderOpen className="w-4 h-4 mr-2" />
-            File Explorer ({files.length})
-          </Button>
-          {/* Admin Button - only show if user has admin permission and permissions are loaded */}
-          {!loadingPermissions && hasAdminPermission(userPermissions) && (
-            <Button
-              variant="outline"
-              onClick={() => router.push("/dashboard/admin")}
-              className="w-full bg-white/90 text-orange-600 border-orange-300 hover:bg-orange-50 font-medium"
-            >
-              <Edit2 className="w-4 h-4 mr-2" />
-              Admin Panel
-            </Button>
-          )}
-          {/* Show permission loading state */}
-          {loadingPermissions && (
-            <div className="w-full text-center py-2 text-white/70 text-xs">
-              Loading permissions...
-            </div>
-          )}
-          {/* Show permission error */}
-          {!loadingPermissions && permissionError && (
-            <div className="w-full text-center py-2 text-red-200 text-xs">
-              Permission error: {permissionError}
-            </div>
-          )}
         </div>
       </div>
 
-      {/* Chat History */}
-      <ScrollArea className="flex-1 p-3">
-        {loading ? (
-          <div className="text-center text-gray-500 py-4">Loading chats...</div>
-        ) : (
-          <div className="space-y-3">
-            {chats.map((chat) => (
-              <Card
-                key={chat.id}
-                className={`m-1 cursor-pointer transition-all duration-200 hover:shadow-md border-0 ${
-                  selectedChatId === chat.id
-                    ? "bg-gradient-to-r from-blue-100 to-purple-100 ring-2 ring-blue-400/50 shadow-lg"
-                    : "bg-white/70 hover:bg-white/90"
-                }`}
-                onClick={() =>
-                  chat.id && !editingChatId && handleChatSelect(chat.id)
-                }
+      {/* Navigation Items and Chat History - Scrollable Area */}
+      <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+        <div className="p-4 flex-shrink-0">
+          <nav className="space-y-1">
+            {/* File Explorer */}
+            <Button
+              variant="ghost"
+              onClick={() => setFileExplorerOpen(true)}
+              className="w-full justify-start text-gray-700 hover:bg-gray-50 font-medium h-12 px-4"
+            >
+              <FolderOpen className="w-5 h-5 mr-3" />
+              <span className="text-sm">File Explorer ({files.length})</span>
+            </Button>
+
+            {/* Admin Button - only show if user has admin permission and permissions are loaded */}
+            {!loadingPermissions && hasAdminPermission(userPermissions) && (
+              <Button
+                variant="ghost"
+                onClick={() => router.push("/dashboard/admin")}
+                className="w-full justify-start text-gray-700 hover:bg-gray-50 font-medium h-12 px-4"
               >
-                <CardContent className="p-3">
-                  <div className="flex items-start justify-between space-x-3">
-                    <div className="flex items-start space-x-3 flex-1 min-w-0">
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center flex-shrink-0">
-                        <MessageSquare className="w-4 h-4 text-white" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        {editingChatId === chat.id ? (
-                          <div
-                            className="space-y-2"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <Input
-                              value={editingChatName}
-                              onChange={(e) =>
-                                setEditingChatName(e.target.value)
-                              }
-                              onKeyPress={(e) => {
-                                if (e.key === "Enter") {
-                                  handleSaveRename(chat.id!);
-                                } else if (e.key === "Escape") {
-                                  handleCancelRename();
-                                }
-                              }}
-                              className="text-sm font-medium h-6 px-1"
-                              autoFocus
-                            />
-                            <div className="flex items-center space-x-1">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={(e) => handleSaveRename(chat.id!, e)}
-                                className="h-6 w-6 p-0 text-green-600 hover:text-green-700 hover:bg-green-50"
-                              >
-                                <Check className="w-3 h-3" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={handleCancelRename}
-                                className="h-6 w-6 p-0 text-gray-400 hover:text-gray-600 hover:bg-gray-50"
-                              >
-                                <X className="w-3 h-3" />
-                              </Button>
-                            </div>
-                          </div>
-                        ) : (
-                          <>
-                            <p className="text-sm font-medium text-gray-900 truncate">
-                              {chat.name || `Chat ${chat.id}`}
-                            </p>
-                            <p className="text-xs text-gray-600 truncate mt-1">
-                              {chat.message_ids.length} messages
-                            </p>
-                            <p className="text-xs text-gray-500 mt-1">
-                              {chat.file_ids.length} files
-                            </p>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                    {editingChatId !== chat.id && (
-                      <div className="flex items-center space-x-1 flex-shrink-0">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => handleStartRenaming(chat, e)}
-                          className="h-8 w-8 p-0 text-gray-400 hover:text-blue-500 hover:bg-blue-50"
-                        >
-                          <Edit2 className="w-3 h-3" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) =>
-                            chat.id && handleDeleteChat(chat.id, e)
-                          }
-                          className="h-8 w-8 p-0 text-gray-400 hover:text-red-500 hover:bg-red-50"
-                        >
-                          <Trash2 className="w-3 h-3" />
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-            {chats.length === 0 && !loading && (
-              <div className="text-center text-gray-500 py-4">
-                No chats yet. Create your first chat!
-              </div>
+                <Edit2 className="w-5 h-5 mr-3" />
+                <span className="text-sm">Admin Panel</span>
+              </Button>
             )}
+          </nav>
+        </div>
+
+        {/* Chat History - Scrollable */}
+        <div className="flex-1 min-h-0 px-4">
+          <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 px-4 flex-shrink-0">
+            Recent Chats
+          </h3>
+          <ScrollArea className="h-full">
+            <div className="space-y-1 pr-2 pb-4">
+              {chats.map((chat) => (
+                <Card
+                  key={chat.id}
+                  className={`cursor-pointer transition-all duration-200 hover:shadow-sm border-0 ${
+                    selectedChatId === chat.id
+                      ? "bg-blue-50 ring-1 ring-blue-200"
+                      : "bg-gray-50 hover:bg-gray-100"
+                  }`}
+                  onClick={() =>
+                    chat.id && !editingChatId && handleChatSelect(chat.id)
+                  }
+                >
+                  <CardContent className="p-3">
+                    <div className="flex items-start justify-between space-x-3">
+                      <div className="flex items-start space-x-3 flex-1 min-w-0">
+                        <div
+                          className={`w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                            selectedChatId === chat.id
+                              ? "bg-blue-600"
+                              : "bg-gray-400"
+                          }`}
+                        >
+                          <MessageSquare className="w-3 h-3 text-white" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          {editingChatId === chat.id ? (
+                            <div
+                              className="space-y-2"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <Input
+                                value={editingChatName}
+                                onChange={(e) =>
+                                  setEditingChatName(e.target.value)
+                                }
+                                onKeyPress={(e) => {
+                                  if (e.key === "Enter") {
+                                    handleSaveRename(chat.id!);
+                                  } else if (e.key === "Escape") {
+                                    handleCancelRename();
+                                  }
+                                }}
+                                className="text-sm font-medium h-6 px-1"
+                                autoFocus
+                              />
+                              <div className="flex items-center space-x-1">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={(e) => handleSaveRename(chat.id!, e)}
+                                  className="h-6 w-6 p-0 text-green-600 hover:text-green-700 hover:bg-green-50"
+                                >
+                                  <Check className="w-3 h-3" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={handleCancelRename}
+                                  className="h-6 w-6 p-0 text-gray-400 hover:text-gray-600 hover:bg-gray-50"
+                                >
+                                  <X className="w-3 h-3" />
+                                </Button>
+                              </div>
+                            </div>
+                          ) : (
+                            <>
+                              <p className="text-sm font-medium text-gray-900 truncate">
+                                {chat.name || `Chat ${chat.id}`}
+                              </p>
+                              <p className="text-xs text-gray-500 truncate mt-1">
+                                {chat.message_ids.length} messages
+                              </p>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                      {editingChatId !== chat.id && (
+                        <div className="flex items-center space-x-1 flex-shrink-0">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => handleStartRenaming(chat, e)}
+                            className="h-6 w-6 p-0 text-gray-400 hover:text-blue-500 hover:bg-blue-50"
+                          >
+                            <Edit2 className="w-2.5 h-2.5" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) =>
+                              chat.id && handleDeleteChat(chat.id, e)
+                            }
+                            className="h-6 w-6 p-0 text-gray-400 hover:text-red-500 hover:bg-red-50"
+                          >
+                            <Trash2 className="w-2.5 h-2.5" />
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+              {chats.length === 0 && !loading && (
+                <div className="text-center text-gray-500 py-4 text-sm">
+                  No chats yet
+                </div>
+              )}
+            </div>
+          </ScrollArea>
+        </div>
+
+        {/* Show permission loading state */}
+        {loadingPermissions && (
+          <div className="text-center py-2 text-gray-500 text-xs flex-shrink-0">
+            Loading permissions...
           </div>
         )}
-      </ScrollArea>
+        {/* Show permission error */}
+        {!loadingPermissions && permissionError && (
+          <div className="text-center py-2 text-red-500 text-xs flex-shrink-0">
+            Permission error: {permissionError}
+          </div>
+        )}
+      </div>
 
-      {/* Footer Actions */}
-      <div className="p-4 border-t border-blue-200/50 space-y-2 bg-gradient-to-r from-blue-50 to-purple-50">
-        <Button
-          variant="outline"
-          onClick={handleClearAllChats}
-          className="w-full border-blue-300 text-blue-700 hover:bg-blue-50"
-          disabled={chats.length === 0 || loading}
-        >
-          <Trash2 className="w-4 h-4 mr-2" />
-          Clear All Chats
-        </Button>
+      {/* Footer - Always visible */}
+      <div className="p-4 border-t border-gray-200 space-y-2 flex-shrink-0">
         <Button
           variant="ghost"
           onClick={handleLogout}
-          className="w-full text-purple-700 hover:bg-purple-50"
+          className="w-full justify-start text-gray-700 hover:bg-gray-50 font-medium h-12 px-4"
         >
-          <LogOut className="w-4 h-4 mr-2" />
-          Logout
+          <LogOut className="w-5 h-5 mr-3" />
+          <span className="text-sm">Logout</span>
+        </Button>
+
+        <Button
+          variant="outline"
+          onClick={handleClearAllChats}
+          className="w-full border-gray-300 text-gray-700 hover:bg-gray-50 h-10"
+          disabled={chats.length === 0 || loading}
+        >
+          <Trash2 className="w-4 h-4 mr-2" />
+          <span className="text-sm">Clear All Chats</span>
         </Button>
       </div>
     </div>
@@ -1167,15 +1190,15 @@ export default function DashboardPage() {
   // Show loading screen while auth is initializing
   if (!authInitialized) {
     return (
-      <div className="flex h-screen items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50">
+      <div className="flex h-screen items-center justify-center bg-gray-50">
         <div className="text-center">
-          <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-xl">
+          <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
             <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
           </div>
-          <h2 className="text-xl font-semibold text-slate-900 mb-2">
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">
             Initializing...
           </h2>
-          <p className="text-slate-600">
+          <p className="text-gray-600">
             Please wait while we load your dashboard
           </p>
         </div>
@@ -1184,21 +1207,15 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="flex h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50">
-      {/* Subtle background elements */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-32 w-96 h-96 bg-gradient-to-br from-purple-200/20 to-blue-200/20 rounded-full blur-3xl"></div>
-        <div className="absolute -bottom-40 -left-32 w-96 h-96 bg-gradient-to-tr from-blue-200/20 to-indigo-200/20 rounded-full blur-3xl"></div>
-      </div>
-
+    <div className="flex h-screen bg-gray-50">
       {/* Desktop Sidebar */}
-      <div className="hidden lg:block w-96 relative z-10">
+      <div className="hidden lg:block w-80 relative z-10">
         <SidebarContent />
       </div>
 
       {/* Mobile Sidebar */}
       <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
-        <SheetContent side="left" className="p-0 w-96">
+        <SheetContent side="left" className="p-0 w-80">
           <SidebarContent />
         </SheetContent>
       </Sheet>
@@ -1208,7 +1225,7 @@ export default function DashboardPage() {
         {selectedChat ? (
           <>
             {/* Chat Header */}
-            <div className="bg-white/80 backdrop-blur-md shadow-sm border-b border-slate-200/60 p-4">
+            <div className="bg-white border-b border-gray-200 p-4">
               <div className="flex items-center space-x-3">
                 <Button
                   variant="ghost"
@@ -1218,14 +1235,14 @@ export default function DashboardPage() {
                 >
                   <Menu className="w-5 h-5" />
                 </Button>
-                <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center shadow-lg">
+                <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center">
                   <MessageSquare className="w-4 h-4 text-white" />
                 </div>
                 <div>
-                  <h2 className="text-lg font-semibold text-slate-900 truncate">
+                  <h2 className="text-lg font-semibold text-gray-900 truncate">
                     {selectedChat.name ?? "New Chat"}
                   </h2>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-gray-500">
                     {selectedChat.message_ids.length} messages •{" "}
                     {selectedChat.file_ids.length} files
                   </p>
@@ -1255,7 +1272,7 @@ export default function DashboardPage() {
                             : ""
                         }`}
                       >
-                        <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center flex-shrink-0">
+                        <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center flex-shrink-0">
                           {message.type === MessageType.USER ? (
                             <div className="w-4 h-4 rounded-full bg-white"></div>
                           ) : (
@@ -1272,8 +1289,8 @@ export default function DashboardPage() {
                           <div
                             className={`inline-block p-4 rounded-2xl shadow-sm overflow-hidden ${
                               message.type === MessageType.USER
-                                ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white"
-                                : "bg-white/90 backdrop-blur-sm border border-blue-200/50 text-gray-800"
+                                ? "bg-blue-600 text-white"
+                                : "bg-white border border-gray-200 text-gray-800"
                             }`}
                           >
                             <div className="overflow-auto max-h-96">
@@ -1405,7 +1422,7 @@ export default function DashboardPage() {
             </ScrollArea>
 
             {/* Message Input */}
-            <div className="bg-white/80 backdrop-blur-sm border-t border-blue-200/50 p-4">
+            <div className="bg-white border-t border-gray-200 p-4">
               <div className="max-w-4xl mx-auto">
                 {/* Attached Files Display */}
                 {attachedFiles.length > 0 && (
@@ -1442,14 +1459,14 @@ export default function DashboardPage() {
                           ? "(Press '/' for quick actions)"
                           : ""
                       }`}
-                      className="min-h-[60px] max-h-32 resize-none border-blue-200 focus:border-blue-400 focus:ring-blue-400"
+                      className="min-h-[60px] max-h-32 resize-none border-gray-200 focus:border-blue-400 focus:ring-blue-400"
                       disabled={sendingMessage}
                     />
                   </div>
                   <Button
                     onClick={handleSendMessage}
                     disabled={!messageInput.trim() || sendingMessage}
-                    className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-3 h-auto"
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 h-auto"
                   >
                     {sendingMessage ? (
                       <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -1470,7 +1487,7 @@ export default function DashboardPage() {
           </>
         ) : (
           /* Welcome Screen */
-          <div className="flex-1 flex items-center justify-center p-4">
+          <div className="flex-1 flex items-center justify-center p-4 bg-white">
             <div className="text-center max-w-md mx-auto">
               <Button
                 variant="ghost"
@@ -1481,20 +1498,20 @@ export default function DashboardPage() {
                 <Menu className="w-5 h-5 mr-2" />
                 Open Menu
               </Button>
-              <div className="w-20 h-20 bg-gradient-to-r from-blue-500 to-purple-500 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-xl">
+              <div className="w-20 h-20 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
                 <Sparkles className="w-10 h-10 text-white" />
               </div>
-              <h2 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-4">
+              <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-4">
                 Welcome to ProjectLens
               </h2>
-              <p className="text-slate-600 mb-8 leading-relaxed">
+              <p className="text-gray-600 mb-8 leading-relaxed">
                 Start a new conversation or select an existing chat from the
                 sidebar to continue where you left off.
               </p>
               <Button
                 onClick={handleNewChat}
                 size="lg"
-                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
+                className="bg-blue-600 hover:bg-blue-700 text-white font-medium"
                 disabled={loading}
               >
                 <Plus className="w-4 h-4 mr-2" />

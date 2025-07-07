@@ -130,26 +130,31 @@ export default function FilesPage() {
 
   const getFileTypeFromPath = (path: string): string => {
     const extension = path.split(".").pop()?.toLowerCase() || "";
-    if (["jpg", "jpeg", "png", "gif", "webp"].includes(extension)) {
-      return "image";
+    if (["csv"].includes(extension)) {
+      return "csv";
     }
-    if (["mp4", "webm", "ogg"].includes(extension)) {
-      return "video";
+    if (["doc", "docx"].includes(extension)) {
+      return "word";
     }
-    if (["pdf", "doc", "docx", "txt"].includes(extension)) {
-      return "document";
+    if (["ppt", "pptx"].includes(extension)) {
+      return "pptx";
     }
-    return "file";
+    if (["pdf"].includes(extension)) {
+      return "pdf";
+    }
+    return "other";
   };
 
   const getFileIcon = (fileType: string) => {
     switch (fileType) {
-      case "image":
-        return <Image className="w-5 h-5" />;
-      case "video":
-        return <Video className="w-5 h-5" />;
-      case "document":
+      case "csv":
         return <FileText className="w-5 h-5" />;
+      case "word":
+        return <FileText className="w-5 h-5" />;
+      case "pptx":
+        return <FileText className="w-5 h-5" />;
+      case "pdf":
+        return <File className="w-5 h-5" />;
       default:
         return <File className="w-5 h-5" />;
     }
@@ -302,65 +307,65 @@ export default function FilesPage() {
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Card className="bg-white/80 backdrop-blur-sm border-blue-200/50">
+          <Card className="bg-white shadow-sm border border-gray-200">
             <CardContent className="p-6">
               <div className="flex items-center space-x-3">
-                <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
+                <div className="w-12 h-12 bg-red-600 rounded-lg flex items-center justify-center">
                   <File className="w-6 h-6 text-white" />
                 </div>
                 <div>
                   <p className="text-2xl font-bold text-gray-900">
-                    {files.length}
+                    {files.filter((f) => f.fileType === "pdf").length}
                   </p>
-                  <p className="text-sm text-gray-600">Total Files</p>
+                  <p className="text-sm text-gray-600">PDF Files</p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-white/80 backdrop-blur-sm border-green-200/50">
+          <Card className="bg-white shadow-sm border border-gray-200">
             <CardContent className="p-6">
               <div className="flex items-center space-x-3">
-                <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-green-600 rounded-lg flex items-center justify-center">
-                  <Image className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {files.filter((f) => f.fileType === "image").length}
-                  </p>
-                  <p className="text-sm text-gray-600">Images</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-white/80 backdrop-blur-sm border-purple-200/50">
-            <CardContent className="p-6">
-              <div className="flex items-center space-x-3">
-                <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-purple-600 rounded-lg flex items-center justify-center">
+                <div className="w-12 h-12 bg-orange-600 rounded-lg flex items-center justify-center">
                   <FileText className="w-6 h-6 text-white" />
                 </div>
                 <div>
                   <p className="text-2xl font-bold text-gray-900">
-                    {files.filter((f) => f.fileType === "document").length}
+                    {files.filter((f) => f.fileType === "pptx").length}
                   </p>
-                  <p className="text-sm text-gray-600">Documents</p>
+                  <p className="text-sm text-gray-600">PowerPoint Files</p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-white/80 backdrop-blur-sm border-orange-200/50">
+          <Card className="bg-white shadow-sm border border-gray-200">
             <CardContent className="p-6">
               <div className="flex items-center space-x-3">
-                <div className="w-12 h-12 bg-gradient-to-r from-orange-500 to-orange-600 rounded-lg flex items-center justify-center">
-                  <Video className="w-6 h-6 text-white" />
+                <div className="w-12 h-12 bg-green-600 rounded-lg flex items-center justify-center">
+                  <FileText className="w-6 h-6 text-white" />
                 </div>
                 <div>
                   <p className="text-2xl font-bold text-gray-900">
-                    {files.filter((f) => f.fileType === "video").length}
+                    {files.filter((f) => f.fileType === "csv").length}
                   </p>
-                  <p className="text-sm text-gray-600">Videos</p>
+                  <p className="text-sm text-gray-600">CSV Files</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white shadow-sm border border-gray-200">
+            <CardContent className="p-6">
+              <div className="flex items-center space-x-3">
+                <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center">
+                  <FileText className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {files.filter((f) => f.fileType === "word").length}
+                  </p>
+                  <p className="text-sm text-gray-600">Word Documents</p>
                 </div>
               </div>
             </CardContent>
@@ -368,7 +373,7 @@ export default function FilesPage() {
         </div>
 
         {/* Search and Actions */}
-        <Card className="mb-6 bg-white/80 backdrop-blur-sm border-blue-200/50">
+        <Card className="mb-6 bg-white shadow-sm border border-gray-200">
           <CardContent className="p-6">
             <div className="flex flex-col sm:flex-row gap-4">
               <div className="relative flex-1">
@@ -377,20 +382,20 @@ export default function FilesPage() {
                   placeholder="Search files by name or path..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 border-blue-200/50 focus:ring-blue-500"
+                  className="pl-10 border-gray-200 focus:border-blue-400 focus:ring-blue-400"
                 />
               </div>
               <div className="flex gap-2">
                 <Button
                   onClick={() => setUploadModalOpen(true)}
-                  className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
+                  className="bg-blue-600 hover:bg-blue-700 text-white"
                 >
                   <Upload className="w-4 h-4 mr-2" />
                   Upload File
                 </Button>
                 <Button
                   onClick={fetchFiles}
-                  className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                  className="bg-blue-600 hover:bg-blue-700 text-white"
                 >
                   <RefreshCw className="w-4 h-4" />
                 </Button>
@@ -476,7 +481,7 @@ export default function FilesPage() {
                     </h3>
                     <div className="flex items-center space-x-2">
                       <Badge variant="outline" className="text-xs">
-                        {file.fileType}
+                        {file.fileType.toUpperCase()}
                       </Badge>
                       <span className="text-xs text-gray-500">
                         {formatFileSize(file.fileSize)}
@@ -544,7 +549,7 @@ export default function FilesPage() {
                   id="file-upload"
                   type="file"
                   onChange={handleFileSelect}
-                  className="border-blue-200/50 focus:ring-blue-500"
+                  className="border-gray-200 focus:border-blue-400 focus:ring-blue-400"
                 />
               </div>
               {uploadForm.file && (
@@ -577,7 +582,7 @@ export default function FilesPage() {
               <Button
                 onClick={handleUploadFile}
                 disabled={uploading || !uploadForm.file}
-                className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
+                className="bg-blue-600 hover:bg-blue-700 text-white"
               >
                 {uploading ? "Uploading..." : "Upload File"}
               </Button>
@@ -684,7 +689,7 @@ export default function FilesPage() {
                   onChange={(e) =>
                     setEditForm({ ...editForm, path: e.target.value })
                   }
-                  className="border-blue-200/50 focus:ring-blue-500"
+                  className="border-gray-200 focus:border-blue-400 focus:ring-blue-400"
                   placeholder="Full URL to the file"
                   rows={3}
                 />
@@ -701,7 +706,7 @@ export default function FilesPage() {
               <Button
                 onClick={handleUpdateFile}
                 disabled={updating}
-                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                className="bg-blue-600 hover:bg-blue-700 text-white"
               >
                 {updating ? "Updating..." : "Update File"}
               </Button>

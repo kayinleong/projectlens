@@ -42,31 +42,21 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50">
-      {/* Subtle background elements */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-32 w-96 h-96 bg-gradient-to-br from-purple-200/30 to-blue-200/30 rounded-full blur-3xl"></div>
-        <div className="absolute -bottom-40 -left-32 w-96 h-96 bg-gradient-to-tr from-blue-200/30 to-indigo-200/30 rounded-full blur-3xl"></div>
-      </div>
-
+    <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-white/80 backdrop-blur-md shadow-sm border-b border-slate-200/60 relative z-10">
+      <header className="bg-white border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-gradient-to-br from-purple-600 to-blue-600 rounded-lg flex items-center justify-center shadow-lg">
-                <span className="text-white font-bold text-sm">PL</span>
+              <div className="w-8 h-8 bg-yellow-400 rounded-lg flex items-center justify-center">
+                <div className="w-4 h-4 bg-blue-600 rounded-sm"></div>
               </div>
               <div>
-                <h1 className="text-xl font-semibold text-slate-900">
-                  ProjectLens
-                </h1>
-                <p className="text-xs text-slate-500">
-                  Accenture Enterprise Platform
-                </p>
+                <h1 className="text-xl font-bold text-gray-900">ProjectLens</h1>
+                <p className="text-sm text-gray-500">CelcomDigi Enterprise</p>
               </div>
             </div>
-            <div className="text-sm text-slate-600 bg-slate-100/50 px-3 py-1 rounded-full">
+            <div className="text-sm text-gray-600 bg-gray-100 px-3 py-1 rounded-lg">
               Employee Login
             </div>
           </div>
@@ -74,11 +64,11 @@ export default function LoginPage() {
       </header>
 
       {/* Main Content */}
-      <div className="flex items-center justify-center p-4 pt-16 pb-24 relative z-10 min-h-[calc(100vh-120px)]">
+      <div className="flex items-center justify-center p-4 pt-16 pb-24 min-h-[calc(100vh-120px)]">
         <div className="w-full max-w-md">
           {/* Welcome Section */}
           <div className="text-center mb-8">
-            <div className="w-20 h-20 bg-gradient-to-br from-purple-500 to-blue-500 rounded-2xl mx-auto mb-6 flex items-center justify-center shadow-lg">
+            <div className="w-20 h-20 bg-blue-600 rounded-2xl mx-auto mb-6 flex items-center justify-center shadow-sm">
               <svg
                 className="w-10 h-10 text-white"
                 fill="none"
@@ -93,22 +83,22 @@ export default function LoginPage() {
                 />
               </svg>
             </div>
-            <h2 className="text-2xl font-bold bg-gradient-to-r from-slate-900 via-purple-800 to-blue-800 bg-clip-text text-transparent mb-2">
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">
               Welcome Back
             </h2>
-            <p className="text-slate-600 text-sm">
+            <p className="text-gray-600 text-sm">
               Sign in to access your project management dashboard
             </p>
           </div>
 
           {/* Login Card */}
-          <Card className="bg-white/70 backdrop-blur-sm shadow-2xl border border-white/50 transform hover:scale-105 transition-all duration-300">
+          <Card className="bg-white shadow-sm border border-gray-200">
             <CardHeader className="space-y-1 pb-4">
-              <CardTitle className="text-xl font-semibold text-center text-slate-900">
+              <CardTitle className="text-xl font-semibold text-center text-gray-900">
                 Employee Login
               </CardTitle>
-              <CardDescription className="text-center text-slate-600">
-                Enter your Accenture credentials to continue
+              <CardDescription className="text-center text-gray-600">
+                Enter your CelcomDigi credentials to continue
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -125,25 +115,25 @@ export default function LoginPage() {
                 )}
 
                 <div className="space-y-2">
-                  <Label htmlFor="email" className="text-slate-700 font-medium">
+                  <Label htmlFor="email" className="text-gray-700 font-medium">
                     Email
                   </Label>
                   <Input
                     id="email"
                     type="email"
-                    placeholder="your.email@accenture.com"
+                    placeholder="your.email@celcomdigi.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
                     disabled={isLoading}
-                    className="border-slate-300 focus:border-blue-400 focus:ring-blue-400"
+                    className="border-gray-200 focus:border-blue-400 focus:ring-blue-400"
                   />
                 </div>
 
                 <div className="space-y-2">
                   <Label
                     htmlFor="password"
-                    className="text-slate-700 font-medium"
+                    className="text-gray-700 font-medium"
                   >
                     Password
                   </Label>
@@ -155,13 +145,13 @@ export default function LoginPage() {
                     onChange={(e) => setPassword(e.target.value)}
                     required
                     disabled={isLoading}
-                    className="border-slate-300 focus:border-blue-400 focus:ring-blue-400"
+                    className="border-gray-200 focus:border-blue-400 focus:ring-blue-400"
                   />
                 </div>
 
                 <Button
                   type="submit"
-                  className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-medium shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95 transition-all duration-200"
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium shadow-sm"
                   disabled={isLoading}
                 >
                   {isLoading ? (
@@ -195,11 +185,12 @@ export default function LoginPage() {
       </div>
 
       {/* Footer */}
-      <footer className="bg-white/80 backdrop-blur-md border-t border-slate-200/60 py-6 mt-auto">
+      <footer className="bg-white border-t border-gray-200 py-6 mt-auto">
         <div className="max-w-7xl mx-auto px-6">
-          <div className="flex items-center justify-between text-xs text-slate-500">
+          <div className="flex items-center justify-between text-xs text-gray-500">
             <div>
-              © {new Date().getFullYear()} Accenture. All rights reserved.
+              © {new Date().getFullYear()} CelcomDigi Enterprise. All rights
+              reserved.
             </div>
             <div className="flex space-x-4"></div>
           </div>

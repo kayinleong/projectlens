@@ -33,8 +33,6 @@ import {
   ChevronLeft,
   ChevronRight,
   UserCheck,
-  UserX,
-  Mail,
   Clock,
   Plus,
 } from "lucide-react";
@@ -67,8 +65,8 @@ interface User {
   emailVerified: boolean;
   creationTime: string;
   lastSignInTime: string;
-  role?: string; // Role name for display
-  roleId?: string; // Role ID for operations
+  role?: string;
+  roleId?: string;
 }
 
 interface Role {
@@ -94,7 +92,6 @@ export default function AdminDashboardPage() {
 
   const usersPerPage = 10;
 
-  // Form state for editing
   const [editForm, setEditForm] = useState({
     email: "",
     displayName: "",
@@ -102,7 +99,6 @@ export default function AdminDashboardPage() {
     roleId: "",
   });
 
-  // Form state for creating new user
   const [createForm, setCreateForm] = useState({
     email: "",
     displayName: "",
@@ -129,15 +125,12 @@ export default function AdminDashboardPage() {
   const initializeData = async () => {
     setLoading(true);
     try {
-      // First fetch roles
       const rolesResult = await getAllRoles();
       let rolesData: Role[] = [];
       if (rolesResult.success && rolesResult.data) {
         rolesData = rolesResult.data as unknown as Role[];
         setRoles(rolesData);
       }
-
-      // Then fetch users with roles
       await fetchUsersWithRoles(rolesData);
     } catch (error) {
       console.error("Failed to initialize data:", error);
@@ -163,9 +156,7 @@ export default function AdminDashboardPage() {
 
   const fetchUsersWithRoles = async (rolesData?: Role[]) => {
     try {
-      // Use provided roles or fetch fresh ones
       const currentRoles = rolesData || roles;
-
       const result = await getAllUsers(100);
       if (result.success) {
         const usersWithRoles = await Promise.all(
@@ -203,7 +194,6 @@ export default function AdminDashboardPage() {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      // Ensure we have the latest roles before fetching users
       const rolesData = await fetchRoles();
       await fetchUsersWithRoles(rolesData);
     } catch (error) {
@@ -226,7 +216,6 @@ export default function AdminDashboardPage() {
 
   const handleUpdateUser = async () => {
     if (!selectedUser) return;
-
     setUpdating(true);
     try {
       const updates: any = {};
@@ -235,7 +224,6 @@ export default function AdminDashboardPage() {
         updates.displayName = editForm.displayName;
       if (editForm.password) updates.password = editForm.password;
 
-      // Update user auth if there are changes
       if (Object.keys(updates).length > 0) {
         const result = await updateUserAuth(selectedUser.uid, updates);
         if (!result.success) {
@@ -243,7 +231,6 @@ export default function AdminDashboardPage() {
         }
       }
 
-      // Update user role if changed
       if (editForm.roleId !== selectedUser.roleId) {
         const existingMetadata = await getUserMetadataByUserId(
           selectedUser.uid
@@ -254,17 +241,14 @@ export default function AdminDashboardPage() {
           existingMetadata.data &&
           existingMetadata.data.length > 0
         ) {
-          // Update existing role
           if (editForm.roleId && editForm.roleId !== "no-role") {
             await updateUserMetadata(existingMetadata.data[0].id!, {
               role_id: editForm.roleId,
             });
           } else {
-            // Remove role if no role selected
             await deleteUserMetadata(existingMetadata.data[0].id!);
           }
         } else if (editForm.roleId && editForm.roleId !== "no-role") {
-          // Create new role assignment
           await createUserMetadata({
             user_id: selectedUser.uid,
             role_id: editForm.roleId,
@@ -284,7 +268,6 @@ export default function AdminDashboardPage() {
 
   const handleDeleteUser = async () => {
     if (!selectedUser) return;
-
     setDeleting(true);
     try {
       const result = await deleteUserWithAuth(selectedUser.uid);
@@ -323,14 +306,12 @@ export default function AdminDashboardPage() {
         createForm.password
       );
       if (result.success && result.uid) {
-        // Update the user with display name if provided
         if (createForm.displayName) {
           await updateUserAuth(result.uid, {
             displayName: createForm.displayName,
           });
         }
 
-        // Assign role if selected
         if (createForm.roleId && createForm.roleId !== "no-role") {
           await createUserMetadata({
             user_id: result.uid,
@@ -363,7 +344,6 @@ export default function AdminDashboardPage() {
     setDeleteModalOpen(true);
   };
 
-  // Pagination
   const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
   const startIndex = (currentPage - 1) * usersPerPage;
   const endIndex = startIndex + usersPerPage;
@@ -386,7 +366,7 @@ export default function AdminDashboardPage() {
         <div className="mb-8">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">
                 User Management
               </h1>
               <p className="text-gray-600">
@@ -395,7 +375,7 @@ export default function AdminDashboardPage() {
             </div>
             <Button
               onClick={() => setCreateModalOpen(true)}
-              className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
+              className="bg-blue-600 hover:bg-blue-700 text-white"
             >
               <Plus className="w-4 h-4 mr-2" />
               Create User
@@ -404,66 +384,61 @@ export default function AdminDashboardPage() {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Card className="bg-white/80 backdrop-blur-sm border-blue-200/50">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+          <Card className="bg-white shadow-sm border border-gray-200 hover:shadow-md transition-shadow duration-200">
             <CardContent className="p-6">
-              <div className="flex items-center space-x-3">
-                <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
-                  <Users className="w-6 h-6 text-white" />
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-4">
+                  <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
+                    <Users className="w-7 h-7 text-white" />
+                  </div>
+                  <div>
+                    <p className="text-3xl font-bold text-gray-900">
+                      {users.length}
+                    </p>
+                    <p className="text-sm font-medium text-gray-600">
+                      Total Users
+                    </p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      All registered accounts
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {users.length}
-                  </p>
-                  <p className="text-sm text-gray-600">Total Users</p>
+                <div className="text-right">
+                  <div className="w-3 h-3 bg-blue-500 rounded-full mb-1"></div>
+                  <p className="text-xs text-gray-400">System</p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-white/80 backdrop-blur-sm border-green-200/50">
+          <Card className="bg-white shadow-sm border border-gray-200 hover:shadow-md transition-shadow duration-200">
             <CardContent className="p-6">
-              <div className="flex items-center space-x-3">
-                <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-green-600 rounded-lg flex items-center justify-center">
-                  <UserCheck className="w-6 h-6 text-white" />
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-4">
+                  <div className="w-14 h-14 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center shadow-lg">
+                    <UserCheck className="w-7 h-7 text-white" />
+                  </div>
+                  <div>
+                    <p className="text-3xl font-bold text-gray-900">
+                      {users.filter((u) => !u.disabled).length}
+                    </p>
+                    <p className="text-sm font-medium text-gray-600">
+                      Active Users
+                    </p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Currently enabled accounts
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {users.filter((u) => !u.disabled).length}
-                  </p>
-                  <p className="text-sm text-gray-600">Active Users</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-white/80 backdrop-blur-sm border-amber-200/50">
-            <CardContent className="p-6">
-              <div className="flex items-center space-x-3">
-                <div className="w-12 h-12 bg-gradient-to-r from-amber-500 to-amber-600 rounded-lg flex items-center justify-center">
-                  <Mail className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {users.filter((u) => u.emailVerified).length}
-                  </p>
-                  <p className="text-sm text-gray-600">Verified Emails</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-white/80 backdrop-blur-sm border-red-200/50">
-            <CardContent className="p-6">
-              <div className="flex items-center space-x-3">
-                <div className="w-12 h-12 bg-gradient-to-r from-red-500 to-red-600 rounded-lg flex items-center justify-center">
-                  <UserX className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {users.filter((u) => u.disabled).length}
-                  </p>
-                  <p className="text-sm text-gray-600">Disabled Users</p>
+                <div className="text-right">
+                  <div className="flex items-center space-x-1 mb-1">
+                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                    <span className="text-xs font-medium text-green-600">
+                      100%
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-400">Active Rate</p>
                 </div>
               </div>
             </CardContent>
@@ -471,7 +446,7 @@ export default function AdminDashboardPage() {
         </div>
 
         {/* Search and Filters */}
-        <Card className="mb-6 bg-white/80 backdrop-blur-sm border-blue-200/50">
+        <Card className="mb-6 bg-white shadow-sm border border-gray-200">
           <CardContent className="p-6">
             <div className="flex flex-col sm:flex-row gap-4">
               <div className="relative flex-1">
@@ -480,20 +455,20 @@ export default function AdminDashboardPage() {
                   placeholder="Search users by email, name, or UID..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 border-blue-200/50 focus:ring-blue-500"
+                  className="pl-10 border-gray-200 focus:border-blue-400 focus:ring-blue-400"
                 />
               </div>
               <div className="flex gap-2">
                 <Button
                   onClick={() => setCreateModalOpen(true)}
-                  className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
+                  className="bg-blue-600 hover:bg-blue-700 text-white"
                 >
                   <Plus className="w-4 h-4 mr-2" />
                   Create User
                 </Button>
                 <Button
                   onClick={fetchUsers}
-                  className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                  className="bg-blue-600 hover:bg-blue-700 text-white"
                 >
                   Refresh
                 </Button>
@@ -503,7 +478,7 @@ export default function AdminDashboardPage() {
         </Card>
 
         {/* Users Table */}
-        <Card className="bg-white/80 backdrop-blur-sm border-blue-200/50">
+        <Card className="bg-white shadow-sm border border-gray-200">
           <CardHeader>
             <CardTitle className="text-xl text-gray-900">
               User Management
@@ -575,32 +550,12 @@ export default function AdminDashboardPage() {
                             </Badge>
                           </td>
                           <td className="py-4 px-4">
-                            <div className="flex flex-col space-y-1">
-                              <Badge
-                                variant={
-                                  user.disabled ? "destructive" : "default"
-                                }
-                                className={
-                                  user.disabled
-                                    ? "bg-red-100 text-red-800"
-                                    : "bg-green-100 text-green-800"
-                                }
-                              >
-                                {user.disabled ? "Disabled" : "Active"}
-                              </Badge>
-                              <Badge
-                                variant={
-                                  user.emailVerified ? "default" : "secondary"
-                                }
-                                className={
-                                  user.emailVerified
-                                    ? "bg-blue-100 text-blue-800"
-                                    : "bg-gray-100 text-gray-800"
-                                }
-                              >
-                                {user.emailVerified ? "Verified" : "Unverified"}
-                              </Badge>
-                            </div>
+                            <Badge
+                              variant="default"
+                              className="bg-green-100 text-green-800"
+                            >
+                              Active
+                            </Badge>
                           </td>
                           <td className="py-4 px-4">
                             <div className="flex items-center space-x-1 text-sm text-gray-600">
@@ -698,7 +653,7 @@ export default function AdminDashboardPage() {
                     setCreateForm({ ...createForm, email: e.target.value })
                   }
                   placeholder="user@example.com"
-                  className="border-blue-200/50 focus:ring-blue-500"
+                  className="border-gray-200 focus:border-blue-400 focus:ring-blue-400"
                 />
               </div>
               <div>
@@ -713,7 +668,7 @@ export default function AdminDashboardPage() {
                     })
                   }
                   placeholder="John Doe"
-                  className="border-blue-200/50 focus:ring-blue-500"
+                  className="border-gray-200 focus:border-blue-400 focus:ring-blue-400"
                 />
               </div>
               <div>
@@ -727,7 +682,7 @@ export default function AdminDashboardPage() {
                     })
                   }
                 >
-                  <SelectTrigger className="border-blue-200/50 focus:ring-blue-500">
+                  <SelectTrigger className="border-gray-200 focus:border-blue-400 focus:ring-blue-400">
                     <SelectValue placeholder="Select a role" />
                   </SelectTrigger>
                   <SelectContent>
@@ -750,7 +705,7 @@ export default function AdminDashboardPage() {
                     setCreateForm({ ...createForm, password: e.target.value })
                   }
                   placeholder="Minimum 6 characters"
-                  className="border-blue-200/50 focus:ring-blue-500"
+                  className="border-gray-200 focus:border-blue-400 focus:ring-blue-400"
                 />
               </div>
               <div>
@@ -768,7 +723,7 @@ export default function AdminDashboardPage() {
                     })
                   }
                   placeholder="Confirm password"
-                  className="border-blue-200/50 focus:ring-blue-500"
+                  className="border-gray-200 focus:border-blue-400 focus:ring-blue-400"
                 />
               </div>
               <p className="text-xs text-gray-500">
@@ -795,7 +750,7 @@ export default function AdminDashboardPage() {
               <Button
                 onClick={handleCreateUser}
                 disabled={creating}
-                className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
+                className="bg-blue-600 hover:bg-blue-700 text-white"
               >
                 {creating ? "Creating..." : "Create User"}
               </Button>
@@ -818,7 +773,7 @@ export default function AdminDashboardPage() {
                   onChange={(e) =>
                     setEditForm({ ...editForm, email: e.target.value })
                   }
-                  className="border-blue-200/50 focus:ring-blue-500"
+                  className="border-gray-200 focus:border-blue-400 focus:ring-blue-400"
                 />
               </div>
               <div>
@@ -829,7 +784,7 @@ export default function AdminDashboardPage() {
                   onChange={(e) =>
                     setEditForm({ ...editForm, displayName: e.target.value })
                   }
-                  className="border-blue-200/50 focus:ring-blue-500"
+                  className="border-gray-200 focus:border-blue-400 focus:ring-blue-400"
                 />
               </div>
               <div>
@@ -843,7 +798,7 @@ export default function AdminDashboardPage() {
                     })
                   }
                 >
-                  <SelectTrigger className="border-blue-200/50 focus:ring-blue-500">
+                  <SelectTrigger className="border-gray-200 focus:border-blue-400 focus:ring-blue-400">
                     <SelectValue placeholder="Select a role" />
                   </SelectTrigger>
                   <SelectContent>
@@ -866,7 +821,7 @@ export default function AdminDashboardPage() {
                     setEditForm({ ...editForm, password: e.target.value })
                   }
                   placeholder="Leave blank to keep current password"
-                  className="border-blue-200/50 focus:ring-blue-500"
+                  className="border-gray-200 focus:border-blue-400 focus:ring-blue-400"
                 />
               </div>
             </div>
@@ -881,7 +836,7 @@ export default function AdminDashboardPage() {
               <Button
                 onClick={handleUpdateUser}
                 disabled={updating}
-                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                className="bg-blue-600 hover:bg-blue-700 text-white"
               >
                 {updating ? "Updating..." : "Update User"}
               </Button>

@@ -232,13 +232,14 @@ export default function RolesPage() {
               }
               placeholder="Enter role name"
               disabled={submitting}
+              className="border-gray-200 focus:border-blue-400 focus:ring-blue-400"
             />
           </div>
 
           {/* Permissions */}
           <div className="space-y-3">
             <Label>Permissions</Label>
-            <ScrollArea className="h-48 border rounded-lg p-3">
+            <ScrollArea className="h-48 border border-gray-200 rounded-lg p-3 bg-gray-50">
               <div className="space-y-3">
                 {AVAILABLE_PERMISSIONS.map((permission) => (
                   <div
@@ -279,6 +280,7 @@ export default function RolesPage() {
               variant="outline"
               onClick={() => onOpenChange(false)}
               disabled={submitting}
+              className="border-gray-300"
             >
               <X className="w-4 h-4 mr-2" />
               Cancel
@@ -286,7 +288,7 @@ export default function RolesPage() {
             <Button
               onClick={onSubmit}
               disabled={!formData.name.trim() || submitting}
-              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+              className="bg-blue-600 hover:bg-blue-700 text-white"
             >
               {submitting ? (
                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
@@ -306,7 +308,7 @@ export default function RolesPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg flex items-center justify-center">
+          <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
             <UserCheck className="w-5 h-5 text-white" />
           </div>
           <div>
@@ -318,7 +320,7 @@ export default function RolesPage() {
         </div>
         <Button
           onClick={openCreateDialog}
-          className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+          className="bg-blue-600 hover:bg-blue-700 text-white"
         >
           <Plus className="w-4 h-4 mr-2" />
           Create Role
@@ -326,7 +328,7 @@ export default function RolesPage() {
       </div>
 
       {/* Roles List */}
-      <Card>
+      <Card className="bg-white shadow-sm border border-gray-200">
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
             <Shield className="w-5 h-5" />
@@ -389,7 +391,7 @@ export default function RolesPage() {
                             variant="ghost"
                             size="sm"
                             onClick={() => openEditDialog(role)}
-                            className="h-8 w-8 p-0"
+                            className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
                           >
                             <Edit2 className="w-3 h-3" />
                           </Button>
