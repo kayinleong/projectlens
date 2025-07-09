@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 
 export default function Home() {
   return (
@@ -10,8 +11,15 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-yellow-400 rounded-lg flex items-center justify-center">
-                <div className="w-4 h-4 bg-blue-600 rounded-sm"></div>
+              <div className="w-8 h-8 mr-3 relative">
+                <Image
+                  src="/ProjectLens.png"
+                  alt="ProjectLens Logo"
+                  width={32}
+                  height={32}
+                  className="object-contain"
+                  priority
+                />
               </div>
               <div>
                 <h1 className="text-xl font-bold text-gray-900">ProjectLens</h1>
@@ -436,8 +444,15 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-6 py-12">
           <div className="flex flex-col md:flex-row items-center justify-between">
             <div className="flex items-center space-x-3 mb-4 md:mb-0">
-              <div className="w-8 h-8 bg-yellow-400 rounded-lg flex items-center justify-center">
-                <div className="w-4 h-4 bg-blue-600 rounded-sm"></div>
+              <div className="w-8 h-8 mr-3 relative">
+                <Image
+                  src="/ProjectLens.png"
+                  alt="ProjectLens Logo"
+                  width={32}
+                  height={32}
+                  className="object-contain"
+                  priority
+                />
               </div>
               <div>
                 <h3 className="text-lg font-bold text-gray-900">ProjectLens</h3>

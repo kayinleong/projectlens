@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -85,8 +86,15 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       {/* Header */}
       <div className="p-6 border-b border-gray-200 flex-shrink-0">
         <div className="flex items-center mb-6">
-          <div className="w-8 h-8 bg-yellow-400 rounded-lg flex items-center justify-center mr-3">
-            <div className="w-4 h-4 bg-blue-600 rounded-sm"></div>
+          <div className="w-8 h-8 mr-3 relative">
+            <Image
+              src="/ProjectLens.png"
+              alt="ProjectLens Logo"
+              width={32}
+              height={32}
+              className="object-contain"
+              priority
+            />
           </div>
           <div>
             <h1 className="text-xl font-bold text-gray-900">ProjectLens</h1>

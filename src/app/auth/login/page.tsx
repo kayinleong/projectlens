@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -48,8 +49,15 @@ export default function LoginPage() {
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-yellow-400 rounded-lg flex items-center justify-center">
-                <div className="w-4 h-4 bg-blue-600 rounded-sm"></div>
+              <div className="w-8 h-8 mr-3 relative">
+                <Image
+                  src="/ProjectLens.png"
+                  alt="ProjectLens Logo"
+                  width={32}
+                  height={32}
+                  className="object-contain"
+                  priority
+                />
               </div>
               <div>
                 <h1 className="text-xl font-bold text-gray-900">ProjectLens</h1>

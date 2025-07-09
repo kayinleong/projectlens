@@ -3,6 +3,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Button } from "@/components/ui/button";
@@ -920,8 +921,15 @@ export default function DashboardPage() {
       {/* Header */}
       <div className="p-6 border-b border-gray-200 flex-shrink-0">
         <div className="flex items-center mb-6">
-          <div className="w-8 h-8 bg-yellow-400 rounded-lg flex items-center justify-center mr-3">
-            <div className="w-4 h-4 bg-blue-600 rounded-sm"></div>
+          <div className="w-8 h-8 mr-3 relative">
+            <Image
+              src="/ProjectLens.png"
+              alt="ProjectLens Logo"
+              width={32}
+              height={32}
+              className="object-contain"
+              priority
+            />
           </div>
           <div>
             <h1 className="text-xl font-bold text-gray-900">ProjectLens</h1>
@@ -1426,25 +1434,13 @@ export default function DashboardPage() {
               <div className="max-w-4xl mx-auto">
                 {/* Attached Files Display */}
                 {attachedFiles.length > 0 && (
-                  <div className="mb-3 flex flex-wrap gap-2">
-                    {attachedFiles.map((file) => {
-                      const filename = getFilenameFromPath(file.path);
-                      return (
-                        <div
-                          key={file.id}
-                          className="flex items-center space-x-2 bg-blue-50 border border-blue-200 rounded-lg px-3 py-1.5 text-sm"
-                        >
-                          {getFileTypeIcon(filename)}
-                          <span className="truncate max-w-32">{filename}</span>
-                          <button
-                            onClick={() => handleRemoveAttachedFile(file.id!)}
-                            className="text-blue-600 hover:text-blue-800 flex-shrink-0"
-                          >
-                            <X className="w-3 h-3" />
-                          </button>
-                        </div>
-                      );
-                    })}
+                  <div className="mb-3">
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 text-sm">
+                      <span className="text-blue-800 font-medium">
+                        📄 Referencing {attachedFiles.length} document
+                        {attachedFiles.length !== 1 ? "s" : ""}
+                      </span>
+                    </div>
                   </div>
                 )}
 
@@ -1498,8 +1494,15 @@ export default function DashboardPage() {
                 <Menu className="w-5 h-5 mr-2" />
                 Open Menu
               </Button>
-              <div className="w-20 h-20 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                <Sparkles className="w-10 h-10 text-white" />
+              <div className="w-20 h-20 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-6 p-4">
+                <Image
+                  src="/ProjectLens.png"
+                  alt="ProjectLens Logo"
+                  width={48}
+                  height={48}
+                  className="object-contain"
+                  priority
+                />
               </div>
               <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-4">
                 Welcome to ProjectLens
